@@ -1,0 +1,96 @@
+Link to the file: https://modeanalytics.com/ramyata/reports/15e35bcd3ef0
+
+/*Do the answers to any of your original hypotheses lead you to further questions?
+If so, what are they and how will you test them?
+If they are questions that you can’t answer using data alone, how would you go about answering them (hypothetically, assuming you actually worked at this company)?
+What seems like the most likely cause of the engagement dip?
+What, if anything, should the company do in response?*/
+
+SELECT DATE_TRUNC('week', e.occurred_at),
+       COUNT(DISTINCT e.user_id) AS weekly_active_users
+  FROM tutorial.yammer_events e
+ WHERE e.event_type = 'engagement'
+   AND e.event_name = 'login'
+ GROUP BY 1
+ ORDER BY 1
+
+--With the help of above query, we can see that there is a dip in the logins in August first week , as the
+--numbers go down from 1442 to 1266.
+
+SELECT DATE_TRUNC('week', e.occurred_at),
+       e.event_type,
+       COUNT(DISTINCT e.user_id) AS weekly_active_users
+  FROM tutorial.yammer_events e
+ --WHERE e.event_type = 'engagement'
+   --AND e.event_name = 'login'
+ GROUP BY 1,2
+ ORDER BY 1
+
+----Answer1:
+--By running the above,we see that in August first week, even the sign up_flow goes down though if we look at the 
+--historical data, that attribute fluctuates, so our focus should be in understanding why engagement went down nad
+--continued to decrease.
+
+----Answer2:
+--Why is the engagement decreasing, is it a particular channel which is causing the decrease, is there an issue
+--that I can't see through data and would require communicating with product teams? 
+--I start by looking at the engagement numbers coming in via different channels(computer, phone, tablet)
+
+SELECT DATE_TRUNC('week', occurred_at) AS week,
+       COUNT(DISTINCT e.user_id) AS weekly_active_users,
+       COUNT(DISTINCT CASE WHEN e.device IN ('macbook pro','lenovo thinkpad','macbook air','dell inspiron notebook',
+          'asus chromebook','dell inspiron desktop','acer aspire notebook','hp pavilion desktop','acer aspire desktop','mac mini')
+          THEN e.user_id ELSE NULL END) AS computer,
+       COUNT(DISTINCT CASE WHEN e.device IN ('iphone 5','samsung galaxy s4','nexus 5','iphone 5s','iphone 4s','nokia lumia 635',
+       'htc one','samsung galaxy note','amazon fire phone') THEN e.user_id ELSE NULL END) AS phone,
+        COUNT(DISTINCT CASE WHEN e.device IN ('ipad air','nexus 7','ipad mini','nexus 10','kindle fire','windows surface',
+        'samsumg galaxy tablet') THEN e.user_id ELSE NULL END) AS tablet
+  FROM tutorial.yammer_events e
+ WHERE e.event_type = 'engagement'
+   AND e.event_name = 'login'
+ GROUP BY 1
+ ORDER BY 1
+LIMIT 100
+
+----Answer3:
+--I see that phone engagement started decreasing in the first week of August and continued decreasing untill it 
+--picked up again in the end. Why this happened is not clear from the data, so I would reach out to the product team
+--to understand if there has been any recent release for mobile apps or if something is broken and is causing this issue.
+--None the less, I would show them these numbers so they can help me understand what might have caused this dip.
+
+
+SELECT DATE_TRUNC('week', e.occurred_at),
+       COUNT(CASE WHEN action = 'email_clickthrough' then e.user_id else NULL end) as wkly_active_usrs_clickthrough,
+       COUNT(CASE WHEN action = 'email_open' then e.user_id end) as wkly_active_usrs_email_open,
+       COUNT(CASE WHEN action = 'sent_reengagement_email' then e.user_id end) as wkly_active_usrs_reengage,
+       COUNT(CASE WHEN action = 'sent_weekly_digest' then e.user_id end) as wkly_active_usrs_wkly_digest
+  FROM tutorial.yammer_events e
+  LEFT JOIN tutorial.yammer_emails em
+  on e.user_id = em.user_id
+ WHERE e.event_type = 'engagement'
+   AND e.event_name = 'login'
+ GROUP BY 1
+ ORDER BY 1
+ 
+ ----Answer3: (continued)
+ --It is good to check if any of the actins taken caused it, though you can't say why but you can see that
+ --the weekly digest numbers did see a major drop and continued decreasing. So this is another thing that I would 
+ --suggest the product team to verify. This will narrow down their area of focus and help them identify the cause of the issue 
+ --quickly.
+ 
+ ----Answer4:
+ --It looks like weekly digest and mobile app are the major causes for the dip and need further research.
+ 
+----Answer5:
+--Few actions that the company should take are:
+--1) Check what's wrong with the mobile app and fix it. 
+--2) Communicate the issue and the fix to the users.
+--3) Understand why weekly digest saw the dip and take actions accordingly.
+ 
+ 
+ 
+
+
+
+
+
